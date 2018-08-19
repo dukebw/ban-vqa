@@ -55,19 +55,20 @@ def get_logits(model, dataloader):
     qIds = torch.IntTensor(N).zero_()
     idx = 0
     bar = progressbar.ProgressBar(max_value=N)
-    for v, b, q, i in iter(dataloader):
-        bar.update(idx)
-        batch_size = v.size(0)
-        v = Variable(v, volatile=True).cuda()
-        b = Variable(b, volatile=True).cuda()
-        q = Variable(q, volatile=True).cuda()
-        logits, att = model(v, b, q, None)
-        pred[idx:idx+batch_size,:].copy_(logits.data)
-        qIds[idx:idx+batch_size].copy_(i)
-        idx += batch_size
-        if args.debug:
-            print(get_question(q.data[0], dataloader))
-            print(get_answer(logits.data[0], dataloader))
+    with torch.no_grad():
+        for v, b, q, i in iter(dataloader):
+            bar.update(idx)
+            batch_size = v.size(0)
+            v = v.cuda()
+            b = b.cuda()
+            q = q.cuda()
+            logits, att = model(v, b, q, None)
+            pred[idx:idx+batch_size,:].copy_(logits.data)
+            qIds[idx:idx+batch_size].copy_(i)
+            idx += batch_size
+            if args.debug:
+                print(get_question(q.data[0], dataloader))
+                print(get_answer(logits.data[0], dataloader))
     bar.update(idx)
     return pred, qIds
 

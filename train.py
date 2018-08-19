@@ -113,23 +113,25 @@ def evaluate(model, dataloader):
     entropy = None
     if hasattr(model.module, 'glimpse'):
         entropy = torch.Tensor(model.module.glimpse).zero_().cuda()
-    for v, b, q, a in iter(dataloader):
-        v = Variable(v).cuda()
-        b = Variable(b).cuda()
-        q = Variable(q, volatile=True).cuda()
-        pred, att = model(v, b, q, None)
-        batch_score = compute_score_with_logits(pred, a.cuda()).sum()
-        score += batch_score
-        upper_bound += (a.max(1)[0]).sum()
-        num_data += pred.size(0)
-        if att is not None and 0 < model.module.glimpse:
-            entropy += calc_entropy(att.data)[:model.module.glimpse]
 
-    score = score / len(dataloader.dataset)
-    upper_bound = upper_bound / len(dataloader.dataset)
+    with torch.no_grad():
+        for v, b, q, a in iter(dataloader):
+            v = v.cuda()
+            b = b.cuda()
+            q = q.cuda()
+            pred, att = model(v, b, q, None)
+            batch_score = compute_score_with_logits(pred, a.cuda()).sum()
+            score += batch_score
+            upper_bound += (a.max(1)[0]).sum()
+            num_data += pred.size(0)
+            if att is not None and 0 < model.module.glimpse:
+                entropy += calc_entropy(att.data)[:model.module.glimpse]
 
-    if entropy is not None:
-        entropy = entropy / len(dataloader.dataset)
+        score = score / len(dataloader.dataset)
+        upper_bound = upper_bound / len(dataloader.dataset)
+
+        if entropy is not None:
+            entropy = entropy / len(dataloader.dataset)
 
     return score, upper_bound, entropy
 
