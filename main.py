@@ -26,7 +26,9 @@ def parse_args():
     parser.add_argument('--gamma', type=int, default=8, help='glimpse')
     parser.add_argument('--use_both', type=bool, default=False, help='use both train/val datasets to train?')
     parser.add_argument('--use_vg', type=bool, default=False, help='use visual genome dataset to train?')
-    parser.add_argument('--tfidf', type=bool, default=True, help='tfidf word embedding?')
+    parser.add_argument('--tfidf', dest='tfidf', action='store_true', help='tfidf word embedding?')
+    parser.add_argument('--no-tfidf', dest='tfidf', action='store_false', help='no tfidf')
+    parser.set_defaults(tfidf=True)
     parser.add_argument('--input', type=str, default=None)
     parser.add_argument('--output', type=str, default='saved_models/ban')
     parser.add_argument('--batch_size', type=int, default=256)
@@ -59,6 +61,7 @@ if __name__ == '__main__':
     weights = None
 
     if args.tfidf:
+        assert False
         dict = Dictionary.load_from_file('data/dictionary.pkl')
         tfidf, weights = tfidf_from_questions(['train', 'val', 'test2015'], dict)
     model.w_emb.init_embedding('data/glove6b_init_300d.npy', tfidf, weights)

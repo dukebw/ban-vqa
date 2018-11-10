@@ -30,7 +30,8 @@ class BanModel(nn.Module):
         self.v_att = v_att
         self.b_net = nn.ModuleList(b_net)
         self.q_prj = nn.ModuleList(q_prj)
-        self.c_prj = nn.ModuleList(c_prj)
+        # self.c_prj = nn.ModuleList(c_prj)
+        self.c_prj = None
         self.classifier = classifier
         self.counter = counter
         self.drop = nn.Dropout(.5)
@@ -56,10 +57,10 @@ class BanModel(nn.Module):
             b_emb[g] = self.b_net[g].forward_with_weights(v, q_emb, att[:,g,:,:]) # b x l x h
             
             atten, _ = logits[:,g,:,:].max(2)
-            embed = self.counter(boxes, atten)
+            # embed = self.counter(boxes, atten)
 
             q_emb = self.q_prj[g](b_emb[g].unsqueeze(1)) + q_emb
-            q_emb = q_emb + self.c_prj[g](embed).unsqueeze(1)
+            # q_emb = q_emb + self.c_prj[g](embed).unsqueeze(1)
 
         logits = self.classifier(q_emb.sum(1))
 
@@ -80,5 +81,6 @@ def build_ban(dataset, num_hid, op='', gamma=4):
         c_prj.append(FCNet([objects + 1, num_hid], 'ReLU', .0))
     classifier = SimpleClassifier(
         num_hid, num_hid * 2, dataset.num_ans_candidates, .5)
-    counter = Counter(objects)
+    # counter = Counter(objects)
+    counter = None
     return BanModel(dataset, w_emb, q_emb, v_att, b_net, q_prj, c_prj, classifier, counter, op, gamma)
